@@ -16,8 +16,8 @@ async def get_currency_rates():
 
 
 @router.get("/{code}", response_description = "Get exchange rate by currency code")
-async def get_currency_rate_data(code):
-    return await retrieve_currency_rate(code)
+async def get_currency_rate_data(code: str):
+    return await retrieve_currency_rate(code.upper())
 
 
 @router.post("/", response_description = "Add exchange rates")
