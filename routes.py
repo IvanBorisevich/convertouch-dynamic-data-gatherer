@@ -1,32 +1,35 @@
 from fastapi import APIRouter, Body
-from fastapi.encoders import jsonable_encoder
+from typing import Annotated
 
 from database import (
     retrieve_currency_rates,
-    add_currency_rate,
-    retrieve_currency_rate
-)
-from models import (
-    CurrencyRate,
-    CurrencyRateUpdate,
-    ErrorResponseModel,
-    ResponseModel
+    retrieve_currency_rate,
+    upsert_currency_rates
 )
 
 router = APIRouter()
 
 
-@router.get("/", response_description="currency_rates retrieved")
+@router.get("/", response_description = "Get all exchange rates")
 async def get_currency_rates():
-    currency_rates = await retrieve_currency_rates()
-    if currency_rates:
-        return ResponseModel(currency_rates, "currency_rates data retrieved successfully")
-    return ResponseModel(currency_rates, "Empty list returned")
+    return await retrieve_currency_rates()
 
 
-@router.get("/{id}", response_description="currency_rate data retrieved")
-async def get_currency_rate_data(id):
-    currency_rate = await retrieve_currency_rate(id)
-    if currency_rate:
-        return ResponseModel(currency_rate, "currency_rate data retrieved successfully")
-    return ErrorResponseModel("An error occurred.", 404, "currency_rate doesn't exist.")
+@router.get("/{code}", response_description = "Get exchange rate by currency code")
+async def get_currency_rate_data(code):
+    return await retrieve_currency_rate(code)
+
+
+@router.post("/", response_description = "Add exchange rates")
+async def upsert_currency_rates_data(currency_rates: Annotated[
+        dict,
+        Body(
+            examples=[
+                {
+                    "USD": "1",
+                    "EUR": "1.2"
+                }
+            ],
+        ),
+    ]):
+    await upsert_currency_rates(currency_rates)

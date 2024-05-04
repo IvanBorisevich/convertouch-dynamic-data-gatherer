@@ -1,5 +1,6 @@
 import motor.motor_asyncio
 from bson.objectid import ObjectId
+from pymongo import InsertOne, DeleteOne, ReplaceOne
 
 MONGO_DETAILS = "mongodb://localhost:27017"
 
@@ -10,31 +11,31 @@ database = client.convertouch_dynamic_data
 currency_rate_collection = database.get_collection("currency_rates")
 
 
-# helpers
 
-
-def currency_rate_helper(currency_rate) -> dict:
-    return {
-        "id": str(currency_rate["_id"]),
-        "code": currency_rate["code"],
-        "coefficient": currency_rate["coefficient"]
-    }
+def to_flat_map(currency_rate_doc) -> dict:
+    result = {}
+    result[currency_rate_doc["code"]] = currency_rate_doc["coefficient"]
+    return result
 
 
 async def retrieve_currency_rates():
-    currency_rates = []
+    currency_rates = {}
     async for currency_rate in currency_rate_collection.find():
-        currency_rates.append(currency_rate_helper(currency_rate))
+        currency_rates.update(to_flat_map(currency_rate))
     return currency_rates
 
 
-async def add_currency_rate(currency_rate_data: dict) -> dict:
-    currency_rate = await currency_rate_collection.insert_one(currency_rate_data)
-    new_currency_rate = await currency_rate_collection.find_one({"_id": currency_rate.inserted_id})
-    return currency_rate_helper(new_currency_rate)
-
-
-async def retrieve_currency_rate(id: str) -> dict:
-    currency_rate = await currency_rate_collection.find_one({"_id": ObjectId(id)})
+async def retrieve_currency_rate(code: str) -> dict:
+    currency_rate = await currency_rate_collection.find_one({"code": code})
     if currency_rate:
-        return currency_rate_helper(currency_rate)
+        return to_flat_map(currency_rate)
+    return {}
+    
+    
+async def upsert_currency_rates(currency_rates_data: dict) -> dict:
+    requests = [
+        ReplaceOne({'code': key}, 
+                   {'code': key, 'coefficient': currency_rates_data[key]},
+                   upsert=True) for key in currency_rates_data
+    ]
+    await currency_rate_collection.bulk_write(requests)

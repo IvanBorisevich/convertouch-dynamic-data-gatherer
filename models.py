@@ -31,13 +31,16 @@ class CurrencyRateUpdate(BaseModel):
         }
 
 
-def ResponseModel(data, message):
+def ResponseModel(message):
     return {
-        "data": [data],
         "code": 200,
         "message": message,
     }
 
 
 def ErrorResponseModel(error, code, message):
-    return {"error": error, "code": code, "message": message}
+    return {
+        "error": error, 
+        "code": code, 
+        "message": message
+    }
