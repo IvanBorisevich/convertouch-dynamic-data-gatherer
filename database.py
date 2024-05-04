@@ -34,8 +34,9 @@ async def retrieve_currency_rate(code: str) -> dict:
     
 async def upsert_currency_rates(currency_rates_data: dict) -> dict:
     requests = [
-        ReplaceOne({'code': key}, 
-                   {'code': key, 'coefficient': currency_rates_data[key]},
-                   upsert=True) for key in currency_rates_data
+        ReplaceOne({'code': key}, {'code': key, 'coefficient': currency_rates_data[key]}, upsert=True)
+        if currency_rates_data[key]
+        else DeleteOne({'code': key})
+        for key in currency_rates_data
     ]
     await currency_rate_collection.bulk_write(requests)
