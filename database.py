@@ -15,7 +15,7 @@ try:
     client.admin.command('ping')
     print("Successfully connected to MongoDB Atlas!")
 except Exception as e:
-    print(e)
+    print("Error when trying to connect to the Atlas cluster: ", e)
 else:
     database = client.get_database(db_name)
     currency_rate_collection = database.get_collection("currency_rates")
