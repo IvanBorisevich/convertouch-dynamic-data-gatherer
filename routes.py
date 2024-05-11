@@ -26,8 +26,8 @@ async def upsert_currency_rates_data(currency_rates: Annotated[
         Body(
             examples=[
                 {
-                    "USD": "1",
-                    "EUR": "1.2"
+                    "USD": 1,
+                    "EUR": 1.2
                 }
             ],
         ),
