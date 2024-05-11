@@ -1,16 +1,24 @@
-import motor.motor_asyncio
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
 from pymongo import DeleteOne, ReplaceOne
 import datetime
 import traceback
 import sys
+from env_manager import get_env_variable
 
-MONGO_DETAILS = "mongodb://localhost:27017"
+uri = get_env_variable('ATLAS_URI')
+db_name = get_env_variable('DB_NAME')
 
-client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_DETAILS)
+client = MongoClient(uri, server_api=ServerApi('1'))
 
-database = client.convertouch_dynamic_data
-
-currency_rate_collection = database.get_collection("currency_rates")
+try:
+    client.admin.command('ping')
+    print("Successfully connected to MongoDB Atlas!")
+except Exception as e:
+    print(e)
+else:
+    database = client.get_database(db_name)
+    currency_rate_collection = database.get_collection("currency_rates")
 
 
 
@@ -22,13 +30,13 @@ def to_flat_map(currency_rate_doc) -> dict:
 
 async def retrieve_currency_rates():
     currency_rates = {}
-    async for currency_rate in currency_rate_collection.find():
+    for currency_rate in currency_rate_collection.find():
         currency_rates.update(to_flat_map(currency_rate))
     return currency_rates
 
 
 async def retrieve_currency_rate(code: str) -> dict:
-    currency_rate = await currency_rate_collection.find_one({"code": code})
+    currency_rate = currency_rate_collection.find_one({"code": code})
     if currency_rate:
         return to_flat_map(currency_rate)
     return {}
@@ -42,7 +50,7 @@ async def upsert_currency_rates(currency_rates_data: dict) -> dict:
         for key in currency_rates_data
     ]
     try:
-        await currency_rate_collection.bulk_write(requests)
+        currency_rate_collection.bulk_write(requests)
     except Exception as e:
         print("Error during upsert: ", format_exception(e))
 

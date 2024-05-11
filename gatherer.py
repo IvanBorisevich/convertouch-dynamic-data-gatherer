@@ -1,22 +1,11 @@
 import requests
 import response_transformers
-from dotenv import dotenv_values
 import datetime
-import os
+from env_manager import get_env_variable
 
 from database import (
     upsert_currency_rates
 )
-
-config = dotenv_values(".env")
-
-def get_env_variable(key: str):
-    val = os.environ.get(key)
-
-    if val == None:
-        val = config[key]
-    
-    return val
 
 
 gatherers = {
