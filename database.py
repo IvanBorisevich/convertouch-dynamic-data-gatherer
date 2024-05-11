@@ -28,21 +28,21 @@ def to_flat_map(currency_rate_doc) -> dict:
     return result
 
 
-async def retrieve_currency_rates():
+def retrieve_currency_rates():
     currency_rates = {}
     for currency_rate in currency_rate_collection.find():
         currency_rates.update(to_flat_map(currency_rate))
     return currency_rates
 
 
-async def retrieve_currency_rate(code: str) -> dict:
+def retrieve_currency_rate(code: str) -> dict:
     currency_rate = currency_rate_collection.find_one({"code": code})
     if currency_rate:
         return to_flat_map(currency_rate)
     return {}
     
     
-async def upsert_currency_rates(currency_rates_data: dict) -> dict:
+def upsert_currency_rates(currency_rates_data: dict) -> dict:
     requests = [
         ReplaceOne({'code': key}, {'code': key, 'coefficient': currency_rates_data[key], 'modified': datetime.datetime.now()}, upsert=True)
         if currency_rates_data[key]

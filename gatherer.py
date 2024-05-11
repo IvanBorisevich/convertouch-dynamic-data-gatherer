@@ -18,7 +18,7 @@ gatherers = {
 default_gatherer_id = "exchange_rate_api"
 
 
-async def gather_currency_rates():
+def gather_currency_rates():
     print(datetime.datetime.now(), ' Refresh currency rates started')
     gatherer = gatherers[default_gatherer_id]
 
@@ -28,7 +28,7 @@ async def gather_currency_rates():
 
         if response.ok:
             result = gatherer["transformer"](response.json())
-            await upsert_currency_rates(result)
+            upsert_currency_rates(result)
     
     print(datetime.datetime.now(), ' Refresh currency rates finished')
 
