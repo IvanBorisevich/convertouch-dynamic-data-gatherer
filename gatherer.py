@@ -2,6 +2,7 @@ import requests
 import response_transformers
 from dotenv import dotenv_values
 import datetime
+import os
 
 from database import (
     upsert_currency_rates
@@ -9,9 +10,18 @@ from database import (
 
 config = dotenv_values(".env")
 
+def get_env_variable(key: str):
+    val = os.environ.get(key)
+
+    if val == None:
+        val = config[key]
+    
+    return val
+
+
 gatherers = {
     "exchange_rate_api": {
-        "url": 'https://v6.exchangerate-api.com/v6/{}/latest/USD'.format(config["EXCHANGE_RATE_API_KEY"]),
+        "url": 'https://v6.exchangerate-api.com/v6/{}/latest/USD'.format(get_env_variable("EXCHANGE_RATE_API_KEY")),
         "transformer": response_transformers.tranform_exchange_rate_api_response,
     }
 }
@@ -32,8 +42,5 @@ async def gather_currency_rates():
             await upsert_currency_rates(result)
     
     print(datetime.datetime.now(), ' Refresh currency rates finished')
-
-
-
 
 
