@@ -1,7 +1,5 @@
 import motor.motor_asyncio
-import asyncio
-from bson.objectid import ObjectId
-from pymongo import InsertOne, DeleteOne, ReplaceOne
+from pymongo import DeleteOne, ReplaceOne
 import datetime
 import traceback
 import sys
