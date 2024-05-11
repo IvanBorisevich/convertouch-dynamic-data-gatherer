@@ -6,7 +6,7 @@ import gatherer
 app = FastAPI()
 app.include_router(CurrencyRateRouter, tags=["CurrencyRates"], prefix="/currency-rates")
 
-refresh_times_per_day = 4320
+refresh_times_per_day = 30
 refresh_interval_sec = 24 * 60 * 60 / refresh_times_per_day
 
 @app.on_event("startup")
