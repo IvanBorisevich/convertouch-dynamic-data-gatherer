@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Body
 from typing import Annotated
+import util
 
 from database import (
     retrieve_currency_rates,
@@ -32,4 +33,10 @@ async def upsert_currency_rates_data(currency_rates: Annotated[
             ],
         ),
     ]):
-    await upsert_currency_rates(currency_rates)
+    try:
+        upsert_currency_rates(currency_rates)
+    except Exception as e:
+        print("Error during upsert: ", util.format_exception(e))
+        return {"result": e.message if hasattr(e, 'message') else str(e)}
+    else:
+        return {"result": "OK"}
