@@ -9,29 +9,25 @@ from db.database import (
 )
 
 
-gatherers = {
-    "exchange_rate_api": {
-        "name": EXCHANGE_RATE_API_SOURCE,
+gathering_jobs = [
+    {
+        "name": "Currency rates from {}".format(EXCHANGE_RATE_API_SOURCE),
         "url": 'https://v6.exchangerate-api.com/v6/{}/latest/USD'.format(get_env_variable("EXCHANGE_RATE_API_KEY")),
         "transformer": response_transformers.tranform_exchange_rate_api_response,
+        "run_times_per_day": 3,
     }
-}
+]
 
-default_gatherer_id = "exchange_rate_api"
+def start_gathering_job(job: dict):
+    print(datetime.datetime.now(), ' Starting the job: {}...'.format(job["name"]))
+    
+    if job:
+        response = requests.get(job["url"])
 
-
-def gather_currency_rates():
-    print(datetime.datetime.now(), ' Currency rates refreshing started')
-    gatherer = gatherers[default_gatherer_id]
-
-    if gatherer:
-        print(datetime.datetime.now(), ' Getting data by url')
-        response = requests.get(gatherer["url"])
+        print(datetime.datetime.now(), "[", job["name"], "] Response: ", response)
 
         if response.ok:
-            parsed_rates_list = gatherer["transformer"](response.json())
+            parsed_rates_list = job["transformer"](response.json())
             upsert_currency_rates(parsed_rates_list)
     
-    print(datetime.datetime.now(), ' Currency rates refreshing finished')
-
-
+    print(datetime.datetime.now(), ' Finishing the job: {}...'.format(job["name"]))

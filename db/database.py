@@ -39,7 +39,9 @@ async def retrieve_currency_rate(source: str, code: str) -> dict:
 def upsert_currency_rates(currency_rates_data: list) -> list:
     requests = [
         ReplaceOne(
-            {'source': parsed_rates_map['source']}, 
+            {
+                'source': parsed_rates_map['source']
+            }, 
             {
                 'source': parsed_rates_map['source'], 
                 'rates': parsed_rates_map['rates'], 
