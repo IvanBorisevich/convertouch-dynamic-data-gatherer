@@ -1,23 +1,29 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi_utils.tasks import repeat_every
-from routes import router as CurrencyRateRouter
-import gatherer
+from controller.currency_rate_routes import currency_rate_router as CurrencyRateRouter
+import service.gatherer as gatherer
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print('Convertouch Gatherer is starting up...')
+    await start_gathering_job()
+
+    yield
+    
+    print('Convertouch Gatherer finished')
+
+app = FastAPI(lifespan=lifespan)
 app.include_router(CurrencyRateRouter, tags=["CurrencyRates"], prefix="/currency-rates")
 
-refresh_times_per_day = 30
+refresh_times_per_day = 1
 refresh_interval_sec = 24 * 60 * 60 / refresh_times_per_day
 
-@app.on_event("startup")
+
 @repeat_every(seconds = refresh_interval_sec, wait_first = True)
-async def app_startup():
+async def start_gathering_job():
     gatherer.gather_currency_rates()
-
-
-@app.on_event("shutdown")
-async def app_shutdown():
-    print('Convertouch Gatherer finished')
 
 
 @app.get("/", tags=["Root"])
