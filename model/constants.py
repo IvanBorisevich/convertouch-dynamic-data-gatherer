@@ -1,1 +1,5 @@
+CURRENCY_RATES_DATA_TYPE = "Currency rates"
+
 EXCHANGE_RATE_API_SOURCE = "ExchangeRate-API"
+FLOAT_RATES_API_SOURCE = "FloatRates"
+COIN_GECKO_API_SOURCE = "CoinGecko"
