@@ -1,13 +1,15 @@
+import asyncio
+from datetime import datetime
+import functools
+from fastapi_utils.tasks import repeat_every
 import requests
 from model.constants import COIN_GECKO_API_SOURCE, CURRENCY_RATES_DATA_TYPE, EXCHANGE_RATE_API_SOURCE, FLOAT_RATES_API_SOURCE
 import service.response_parsers as response_parsers
-import datetime
 from env_manager import get_env_variable
 
 from db.database import (
     upsert_currency_rates
 )
-
 
 gathering_jobs = [
     {
@@ -36,18 +38,39 @@ gathering_jobs = [
     }
 ]
 
-def start_gathering_job(job: dict):
-    job_name = '{} from {}'.format(job['data_type'], job['source_name'])
 
-    print(datetime.datetime.now(), "[ {} ] Starting the job ...".format(job_name))
+async def start_jobs():
+    for job in gathering_jobs:
+        job_name = '{} from {}'.format(job['data_type'], job['source_name'])
+
+        task_with_args = functools.partial(start_job, job, job_name)
+
+        repeat_every_in_sec = 24 * 60 * 60 / job["run_times_per_day"]
+        repeated_func = repeat_every(seconds=repeat_every_in_sec)(task_with_args)
+        
+        # Run each wrapped function as a background task
+        asyncio.create_task(schedule_delayed_task(job["delay_before_start_in_sec"], repeated_func(), job_name))
+
+
+
+def start_job(job: dict, job_name: str):
+    print(datetime.now(), "[ {} ] Starting the job ...".format(job_name))
     
     if job:
         response = requests.get(job["url"])
 
-        print(datetime.datetime.now(), "[ {} ] Job response: {}".format(job_name, response))
+        print(datetime.now(), "[ {} ] Job response: {}".format(job_name, response))
 
         if response.ok:
             parsed_rates_list = job["transformer"](response.json())
             upsert_currency_rates(parsed_rates_list)
     
-    print(datetime.datetime.now(), "[ {} ] The job has been finished!".format(job_name))
+    print(datetime.now(), "[ {} ] The job has been finished!".format(job_name))
+
+
+
+async def schedule_delayed_task(delay, task_coro, job_name: str):
+    print(datetime.now(), '[ {} ] Waiting for {} sec before starting...'.format(job_name, delay))
+
+    await asyncio.sleep(delay)
+    await task_coro

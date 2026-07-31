@@ -1,11 +1,8 @@
-import asyncio
 from contextlib import asynccontextmanager
-import functools
 
 from fastapi import FastAPI
-from fastapi_utils.tasks import repeat_every
 from controller.currency_rate_routes import currency_rate_router as CurrencyRateRouter
-import service.gatherer as gatherer
+from service.job_manager import start_jobs
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -18,20 +15,6 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(CurrencyRateRouter, tags=["CurrencyRates"], prefix="/currency-rates")
-
-
-async def start_jobs():
-    for job in gatherer.gathering_jobs:
-        await asyncio.sleep(job["delay_before_start_in_sec"])
-        
-        repeat_every_in_sec = 24 * 60 * 60 / job["run_times_per_day"]
-        
-        task_with_args = functools.partial(gatherer.start_gathering_job, job)
-
-        repeated_func = repeat_every(seconds=repeat_every_in_sec)(task_with_args)
-        
-        # Run each wrapped function as a background task
-        asyncio.create_task(repeated_func())
 
 
 @app.get("/", tags=["Root"])
