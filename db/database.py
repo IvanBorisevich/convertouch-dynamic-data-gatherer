@@ -20,7 +20,12 @@ else:
 
 
 async def retrieve_currency_rates_sources() -> list:
-    return [item['source'] for item in currency_rate_collection.find({}, {"source": 1, "_id": 0})]
+    return [
+        {
+            'value': item['source']
+        } 
+        for item in currency_rate_collection.find({}, {"source": 1, "_id": 0})
+    ]
 
 
 async def retrieve_currency_rates(source: str):
